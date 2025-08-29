@@ -1,3 +1,7 @@
+# Server Code
+
+https://github.com/minhlc98/CodeRunner
+
 # 🖥️ Code Online Runner
 
 Một ứng dụng React để chạy code online với giao diện đẹp và hiện đại.
@@ -116,13 +120,6 @@ Xem chi tiết trong [CONFIGURATION.md](./CONFIGURATION.md)
 - **Axios** cho HTTP requests
 - **CSS3** với Grid, Flexbox, và Animations
 - **Responsive Design** principles
-
-## 📝 Lưu ý
-
-- Cần có backend server để xử lý API endpoints
-- Code mẫu được cung cấp cho mỗi ngôn ngữ
-- Timeout được set 30 giây cho mỗi lần thực thi
-- Tự động cleanup intervals để tránh memory leaks
 
 ## 🤝 Đóng góp
 
