@@ -4,6 +4,7 @@ const _CONST = {
     TYPESCRIPT: 'TYPESCRIPT',
     GO: 'GO',
     JAVA: 'JAVA',
+    PYTHON: 'PYTHON',
   },
   get LANGUAGE_INFO() {
     return {
@@ -27,6 +28,11 @@ const _CONST = {
         value: 'JAVA',
         default_code: 'public class solution {\n\tpublic static void main(String[] args) {\n\t\tSystem.out.println("Hello, World!");\n\t}\n}',
       },
+      [_CONST.LANGUAGE.PYTHON]: {
+        name: 'Python',
+        value: 'PYTHON',
+        default_code: 'print("Hello, World!")',
+      }
     }
   },
   get LIST_LANGUAGE_INFO() {
