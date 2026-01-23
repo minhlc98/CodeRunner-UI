@@ -4,8 +4,13 @@ export const API_CONFIG = {
   
   // Endpoints
   ENDPOINTS: {
-    RUN: '/api/runner/run',
-    STATUS: '/api/runner/status'
+    RUNNER: {
+      RUN: '/api/runner/run',
+      STATUS: '/api/runner/status'      
+    },
+    PROGRAMMING_LANGUAGE: {
+      LIST_ACTIVE: '/api/programming-languages/list-active'
+    }
   }
 };
 
@@ -23,6 +28,11 @@ export const getApiUrl = (endpoint: string, params?: string) => {
 
 // Full URLs
 export const API_URLS = {
-  RUN: getApiUrl(API_CONFIG.ENDPOINTS.RUN),
-  STATUS: (id: string) => getApiUrl(API_CONFIG.ENDPOINTS.STATUS, id)
+  RUNNER: {
+    RUN: getApiUrl(API_CONFIG.ENDPOINTS.RUNNER.RUN),
+    STATUS: (id: string) => getApiUrl(API_CONFIG.ENDPOINTS.RUNNER.STATUS, id)
+  },
+  PROGRAMMING_LANGUAGES: {
+    LIST_ACTIVE: getApiUrl(API_CONFIG.ENDPOINTS.PROGRAMMING_LANGUAGE.LIST_ACTIVE),
+  }
 }; 

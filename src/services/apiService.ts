@@ -13,6 +13,12 @@ interface StatusResponse {
   error: string;
 }
 
+export interface ProgrammingLanguage {
+  id: string;
+  name: string;
+  defaultCode?: string;
+}
+
 // Tạo axios instance với cấu hình mặc định
 const apiClient = axios.create({
   timeout: 30000, // 30 seconds timeout
@@ -44,15 +50,29 @@ apiClient.interceptors.response.use(
 );
 
 /**
+ * Lấy danh sách ngôn ngữ lập trình từ API
+ * @returns Promise<ProgrammingLanguage[]>
+ */
+export const fetchLanguages = async (): Promise<ProgrammingLanguage[]> => {
+  try {
+    const response = await apiClient.get<ProgrammingLanguage[]>(API_URLS.PROGRAMMING_LANGUAGES.LIST_ACTIVE);
+    return response.data;
+  } catch (error) {
+    console.error('💥 Error fetching languages:', error);
+    throw error;
+  }
+};
+
+/**
  * Gửi code lên server để thực thi
- * @param language - Ngôn ngữ lập trình
+ * @param programmingLanguageId - ID của ngôn ngữ lập trình đã chọn
  * @param code - Code cần chạy
  * @returns Promise<RunResponse>
  */
-export const runCode = async (language: string, code: string): Promise<RunResponse> => {
+export const runCode = async (programmingLanguageId: string, code: string): Promise<RunResponse> => {
   try {
-    const response = await apiClient.post<RunResponse>(API_URLS.RUN, {
-      language,
+    const response = await apiClient.post<RunResponse>(API_URLS.RUNNER.RUN, {
+      programmingLanguageId,
       code
     });
     
@@ -70,7 +90,7 @@ export const runCode = async (language: string, code: string): Promise<RunRespon
  */
 export const checkStatus = async (id: string): Promise<StatusResponse> => {
   try {
-    const response = await apiClient.get<StatusResponse>(API_URLS.STATUS(id));
+    const response = await apiClient.get<StatusResponse>(API_URLS.RUNNER.STATUS(id));
     
     return response.data;
   } catch (error) {
@@ -78,18 +98,3 @@ export const checkStatus = async (id: string): Promise<StatusResponse> => {
     throw error;
   }
 };
-
-/**
- * Hàm helper để kiểm tra kết nối server
- * @returns Promise<boolean>
- */
-export const checkServerConnection = async (): Promise<boolean> => {
-  try {
-    const baseUrl = API_URLS.RUN.split('/runner')[0]; // Lấy base URL
-    await axios.get(`${baseUrl}/health`, { timeout: 5000 });
-    return true;
-  } catch (error) {
-    console.warn('⚠️ Server connection check failed:', error);
-    return false;
-  }
-}; 

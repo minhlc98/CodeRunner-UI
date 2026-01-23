@@ -1,29 +1,58 @@
-import React, { useState, useRef } from 'react';
-import { runCode as realRunCode, checkStatus } from '../services/apiService';
+import React, { useState, useRef, useEffect } from 'react';
+import { runCode, checkStatus, fetchLanguages, ProgrammingLanguage } from '../services/apiService';
+import { parseEscapeSequences } from '../helper/index'
 import './CodeOnline.css';
-import _CONST from '../shared/_CONST';
 
 const CodeOnline: React.FC = () => {
-  const defaultLanguage = 'JAVASCRIPT';
-  const [selectedLanguage, setSelectedLanguage] = useState<string>(defaultLanguage);
-  const [code, setCode] = useState<string>(_CONST.LANGUAGE_INFO[defaultLanguage].default_code);
+  const [languages, setLanguages] = useState<ProgrammingLanguage[]>([]);
+  const [selectedLanguageId, setSelectedLanguageId] = useState<string>('');
+  const [code, setCode] = useState<string>('');
   const [output, setOutput] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [status, setStatus] = useState<string>('');
+  const [isLoadingLanguages, setIsLoadingLanguages] = useState<boolean>(true);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
   const lineNumbersRef = useRef<HTMLDivElement | null>(null);
 
+  // Fetch languages from API on component mount
+  useEffect(() => {
+    const loadLanguages = async () => {
+      try {
+        setIsLoadingLanguages(true);
+        const fetchedLanguages = await fetchLanguages();
+        setLanguages(fetchedLanguages);
+        
+        // Set first language as default if available
+        if (fetchedLanguages.length > 0) {
+          const firstLanguage = fetchedLanguages[0];
+          setSelectedLanguageId(firstLanguage.id);
+          const defaultCode = firstLanguage.defaultCode ?? '';
+          setCode(parseEscapeSequences(defaultCode));
+        }
+      } catch (err) {
+        setError('Failed to load programming languages. Please refresh the page.');
+        console.error('Error loading languages:', err);
+      } finally {
+        setIsLoadingLanguages(false);
+      }
+    };
+
+    loadLanguages();
+  }, []);
+
   const handleLanguageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLanguage = event.target.value;
-    const languageInfo = _CONST.LANGUAGE_INFO[newLanguage];
-    setSelectedLanguage(newLanguage);
-    setCode(languageInfo?.default_code || '');
-    setOutput('');
-    setError('');
-    setStatus('');
+    const newLanguageId = event.target.value;
+    setSelectedLanguageId(newLanguageId);
+    
+    // Find selected language and set its default code
+    const selectedLanguage = languages.find(lang => lang.id === newLanguageId);
+    const defaultCode = selectedLanguage?.defaultCode ?? '';
+    setCode(parseEscapeSequences(defaultCode));
+    
+    clearOutput();
   };
 
   const handleCodeChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -42,7 +71,7 @@ const CodeOnline: React.FC = () => {
     setStatus('');
   };
 
-  const runCode = async () => {
+  const handleRunCode = async () => {
     if (!code.trim()) {
       setError('Please enter some code to run.');
       return;
@@ -53,9 +82,14 @@ const CodeOnline: React.FC = () => {
     setOutput('');
     setStatus('Running...');
 
+    if (!selectedLanguageId) {
+      setError('Please select a programming language.');
+      return;
+    }
+
     try {
       // Chọn API dựa trên environment
-      const response = await realRunCode(selectedLanguage, code);
+      const response = await runCode(selectedLanguageId, code);
 
       if (response.success) {
         const { id } = response;
@@ -161,15 +195,21 @@ const CodeOnline: React.FC = () => {
             <label htmlFor="language">Programming Language:</label>
             <select
               id="language"
-              value={selectedLanguage}
+              value={selectedLanguageId}
               onChange={handleLanguageChange}
-              disabled={isRunning}
+              disabled={isRunning || isLoadingLanguages}
             >
-              {_CONST.LIST_LANGUAGE_INFO.map(lang => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.name}
-                </option>
-              ))}
+              {isLoadingLanguages ? (
+                <option value="">Loading languages...</option>
+              ) : languages.length === 0 ? (
+                <option value="">No languages available</option>
+              ) : (
+                languages.map(lang => (
+                  <option key={lang.id} value={lang.id}>
+                    {lang.name}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -207,7 +247,7 @@ const CodeOnline: React.FC = () => {
           <div className="action-buttons">
             <button
               className={`run-btn ${isRunning ? 'running' : ''}`}
-              onClick={runCode}
+              onClick={handleRunCode}
               disabled={isRunning}
             >
               {isRunning ? '🔄 Running...' : '▶️ Run Code'}
